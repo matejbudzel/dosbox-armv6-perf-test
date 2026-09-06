@@ -4,14 +4,15 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=${DOSBOX_ARMV6_PERF_WORKDIR:-/tmp/dosbox-armv6-perf-integration}
 runs=${RUNS:-3}; game_seconds=${GP_SECONDS:-60}
-game_dir=${GP_DIR:-/home/dietpi/pi-286-game-files/grand-prix}
+game_dir=${GP_DIR:-/home/dietpi/pi-286-game-files/grand-prix}; gp_cycles=${GP_CYCLES:-fixed 3000}
 video=${PI286_VIDEO_DRIVER:-fbcon}; audio=${PI286_AUDIO_DRIVER:-alsa}
 [ "$runs" -ge 3 ] 2>/dev/null || { echo 'RUNS must be >= 3' >&2; exit 2; }
 [ "$game_seconds" -ge 10 ] 2>/dev/null || { echo 'GP_SECONDS must be >= 10' >&2; exit 2; }
 [ -x /usr/bin/dosbox ] || { echo '/usr/bin/dosbox is not installed' >&2; exit 2; }
 [ -x "$root/bin/dosbox-normal" ] && [ -x "$root/bin/dosbox-dynrec" ] || { echo 'release is incomplete' >&2; exit 2; }
 [ -r "$root/guest/AV-BENCH.COM" ] || { echo 'release lacks AV-BENCH.COM' >&2; exit 2; }
-[ -r "$game_dir/GP.EXE" ] || { echo "Grand Prix executable missing: $game_dir/GP.EXE" >&2; exit 2; }
+[ -r "$game_dir/GPEGA.EXE" ] || { echo "Grand Prix EGA executable missing: $game_dir/GPEGA.EXE" >&2; exit 2; }
+case $gp_cycles in max|fixed\ [0-9]*) ;; *) echo 'GP_CYCLES must be max or fixed <positive-integer>' >&2; exit 2;; esac
 case $video in
   fbcon) [ -e /dev/fb0 ] || { echo '/dev/fb0 is unavailable' >&2; exit 2; };;
   dummy) audio=dummy;;
@@ -19,7 +20,7 @@ case $video in
 esac
 mkdir -p "$work/logs"; guest="$work/guest"; rm -rf "$guest"; cp -R "$root/guest" "$guest"
 echo 'DOSBox ARMv6 integration experiment'
-echo "work directory: $work"; echo "video=$video audio=$audio game_seconds=$game_seconds"
+echo "work directory: $work"; echo "video=$video audio=$audio game_seconds=$game_seconds gp_cycles=$gp_cycles"
 echo 'For real VGA/audio and Grand Prix input, launch this from the active tty1 console.'
 echo 'custom build provenance:'; sed -n '1,160p' "$root/BUILD-MANIFEST.txt"
 run_dosbox() {
@@ -49,7 +50,7 @@ summarise_av() {
 }
 run_gp() {
   name=$1 binary=$2 template=$3; config="$work/$name.gp.conf"; log="$work/logs/$name-gp.log"
-  sed "s|@GAMEDIR@|$game_dir|g" "$template" > "$config"
+  sed -e "s|@GAMEDIR@|$game_dir|g" -e "s|@CYCLES@|$gp_cycles|g" "$template" > "$config"
   echo "== Grand Prix ${game_seconds}s soak: $name =="
   start=$(date +%s%N)
   SDL_VIDEODRIVER="$video" SDL_AUDIODRIVER="$audio" SDL_FBDEV=/dev/fb0 SDL_FB_BROKEN_MODES=1 \

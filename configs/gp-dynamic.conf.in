@@ -4,19 +4,19 @@ fulldouble=false
 output=surface
 
 [dosbox]
-machine=svga_s3
-memsize=16
+machine=ega
+memsize=8
 
 [cpu]
 core=dynamic
 cputype=386
-cycles=max
+cycles=@CYCLES@
 
 [mixer]
 nosound=false
 rate=22050
-blocksize=512
-prebuffer=20
+blocksize=2048
+prebuffer=100
 
 [speaker]
 pcspeaker=true
@@ -32,4 +32,4 @@ hdma=5
 [autoexec]
 mount c "@GAMEDIR@"
 c:
-GP.EXE
+GPEGA.EXE
