@@ -3,11 +3,13 @@
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=${DOSBOX_ARMV6_PERF_WORKDIR:-/tmp/dosbox-armv6-perf-integration}
-runs=${RUNS:-3}; game_seconds=${GP_SECONDS:-60}
+runs=${RUNS:-3}; game_seconds=${GP_SECONDS:-180}
 game_dir=${GP_DIR:-/home/dietpi/pi-286-game-files/grand-prix}; gp_cycles=${GP_CYCLES:-fixed 3000}
+include_normal=${INCLUDE_CUSTOM_NORMAL:-0}
 video=${PI286_VIDEO_DRIVER:-fbcon}; audio=${PI286_AUDIO_DRIVER:-alsa}
 [ "$runs" -ge 3 ] 2>/dev/null || { echo 'RUNS must be >= 3' >&2; exit 2; }
 [ "$game_seconds" -ge 10 ] 2>/dev/null || { echo 'GP_SECONDS must be >= 10' >&2; exit 2; }
+[ "$include_normal" = 0 ] || [ "$include_normal" = 1 ] || { echo 'INCLUDE_CUSTOM_NORMAL must be 0 or 1' >&2; exit 2; }
 [ -x /usr/bin/dosbox ] || { echo '/usr/bin/dosbox is not installed' >&2; exit 2; }
 [ -x "$root/bin/dosbox-normal" ] && [ -x "$root/bin/dosbox-dynrec" ] || { echo 'release is incomplete' >&2; exit 2; }
 [ -r "$root/guest/AV-BENCH.COM" ] || { echo 'release lacks AV-BENCH.COM' >&2; exit 2; }
@@ -20,7 +22,7 @@ case $video in
 esac
 mkdir -p "$work/logs"; guest="$work/guest"; rm -rf "$guest"; cp -R "$root/guest" "$guest"
 echo 'DOSBox ARMv6 integration experiment'
-echo "work directory: $work"; echo "video=$video audio=$audio game_seconds=$game_seconds gp_cycles=$gp_cycles"
+echo "work directory: $work"; echo "video=$video audio=$audio game_seconds=$game_seconds gp_cycles=$gp_cycles include_custom_normal=$include_normal"
 echo 'For real VGA/audio and Grand Prix input, launch this from the active tty1 console.'
 echo 'custom build provenance:'; sed -n '1,160p' "$root/BUILD-MANIFEST.txt"
 run_dosbox() {
@@ -74,12 +76,18 @@ run_gp() {
   echo "$name: host_elapsed_ms=$elapsed process_cpu_ms=$cpu_ms $pacing log=$log"
 }
 run_av distro /usr/bin/dosbox "$root/config/av-normal.conf.in"
-run_av custom-normal "$root/bin/dosbox-normal" "$root/config/av-normal.conf.in"
+if [ "$include_normal" = 1 ]; then run_av custom-normal "$root/bin/dosbox-normal" "$root/config/av-normal.conf.in"; fi
 run_av custom-dynrec "$root/bin/dosbox-dynrec" "$root/config/av-dynamic.conf.in"
 echo '== VGA + PC-speaker summary: host wall-clock milliseconds =='
-summarise_av distro; summarise_av custom-normal; summarise_av custom-dynrec
-awk -v d="$distro_median" -v n="$normal_median" -v y="$dynrec_median" 'BEGIN { printf "custom-normal vs distro: %.3fx\ncustom-dynrec vs distro: %.3fx\ncustom-dynrec vs custom-normal: %.3fx\n",d/n,d/y,n/y }'
+summarise_av distro
+if [ "$include_normal" = 1 ]; then summarise_av custom-normal; fi
+summarise_av custom-dynrec
+if [ "$include_normal" = 1 ]; then
+  awk -v d="$distro_median" -v n="$normal_median" -v y="$dynrec_median" 'BEGIN { printf "custom-normal vs distro: %.3fx\ncustom-dynrec vs distro: %.3fx\ncustom-dynrec vs custom-normal: %.3fx\n",d/n,d/y,n/y }'
+else
+  awk -v d="$distro_median" -v y="$dynrec_median" 'BEGIN { printf "custom-dynrec vs distro: %.3fx\n",d/y }'
+fi
 run_gp distro /usr/bin/dosbox "$root/config/gp-normal.conf.in"
-run_gp custom-normal "$root/bin/dosbox-normal" "$root/config/gp-normal.conf.in"
+if [ "$include_normal" = 1 ]; then run_gp custom-normal "$root/bin/dosbox-normal" "$root/config/gp-normal.conf.in"; fi
 run_gp custom-dynrec "$root/bin/dosbox-dynrec" "$root/config/gp-dynamic.conf.in"
 echo 'Grand Prix is an integration soak, not a speed ratio: it runs each variant for the same host-time budget.'

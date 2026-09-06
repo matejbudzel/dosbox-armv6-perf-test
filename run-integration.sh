@@ -1,10 +1,10 @@
 #!/bin/sh
 # Pinned bootstrap for the graphics/audio and Grand Prix integration round.
 set -eu
-release=v0.3.0
+release=v0.3.1
 base=https://github.com/matejbudzel/dosbox-armv6-perf-test/releases/download/$release
 work=${DOSBOX_ARMV6_PERF_WORKDIR:-/tmp/dosbox-armv6-perf-integration}
-archive=dosbox-armv6-perf-test-v0.3.0.tar.gz
+archive=dosbox-armv6-perf-test-v0.3.1.tar.gz
 mkdir -p "$work"; cd "$work"
 curl -fL -o SHA256SUMS "$base/SHA256SUMS"
 curl -fL -o "$archive" "$base/$archive"
