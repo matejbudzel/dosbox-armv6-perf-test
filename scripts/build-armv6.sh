@@ -34,7 +34,9 @@ build_one() {
   CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
   CFLAGS="--sysroot=$sysroot $flags" CXXFLAGS="--sysroot=$sysroot $flags" \
   CPPFLAGS="--sysroot=$sysroot -I$sdl/include/SDL" \
-  LDFLAGS="--sysroot=$sysroot $flags -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
+  # The cached g++ frontend was extracted without its optional LTO plugin.
+  # DOSBox is not built with LTO, so suppress its distro default at link time.
+  LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
   SDL_CONFIG="$sdl/bin/sdl-config" \
   ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}
   if [ "$name" = dynrec ]; then

@@ -1,0 +1,4 @@
+#!/bin/sh
+# The extracted g++ driver otherwise finds the host linker before the target
+# linker.  Keep this beside the ARMv6 assembler compatibility wrapper.
+exec /usr/bin/arm-linux-gnueabihf-ld "$@"
