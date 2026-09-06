@@ -20,7 +20,7 @@ run_variant() {
         start=$(date +%s%N)
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy LD_LIBRARY_PATH="$root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "$binary" -conf "$work/$name.conf" >"$work/logs/$name-$run.log" 2>&1
         end=$(date +%s%N); result=$(sed -n 's/^PI286_CPU_BENCH_RESULT=//p' "$guest/RESULT.TXT" 2>/dev/null | tr -d '\r' | tail -1)
-        [ -n "$result" ] || { echo "$name created no guest checksum; see $work/logs/$name-$run.log" >&2; exit 1; }
+        [ "$result" = 79B10000 ] || { echo "$name guest checksum '$result' is not expected 79B10000; see $work/logs/$name-$run.log" >&2; exit 1; }
         [ "$run" -gt 0 ] && printf '%s %s\n' "$(( (end-start)/1000000 ))" "$result" | tee -a "$timings"
         run=$((run+1))
     done

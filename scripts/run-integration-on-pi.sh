@@ -35,7 +35,7 @@ run_av() {
     rm -f "$guest/RESULT.TXT"; sed "s|@GUESTDIR@|$guest|g" "$template" > "$work/$name.av.conf"
     start=$(date +%s%N); run_dosbox "$binary" "$work/$name.av.conf" "$work/logs/$name-av-$run.log"; end=$(date +%s%N)
     result=$(sed -n 's/^PI286_AV_BENCH_RESULT=//p' "$guest/RESULT.TXT" 2>/dev/null | tr -d '\r' | tail -1)
-    [ -n "$result" ] || { echo "$name created no AV checksum; see $work/logs/$name-av-$run.log" >&2; exit 1; }
+    [ "$result" = AF4A0000 ] || { echo "$name AV checksum '$result' is not expected AF4A0000; see $work/logs/$name-av-$run.log" >&2; exit 1; }
     [ "$run" -gt 0 ] && printf '%s %s\n' "$(( (end-start)/1000000 ))" "$result" | tee -a "$timings"
     run=$((run+1))
   done
