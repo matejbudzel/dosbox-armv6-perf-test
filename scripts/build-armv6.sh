@@ -8,16 +8,9 @@ source=${DOSBOX_SOURCE_DIR:-$repo/.cache/debian-source/dosbox-0.74-3}
 work=${DOSBOX_BUILD_DIR:-$repo/.cache/build}
 release=${DOSBOX_RELEASE_DIR:-$repo/release}
 cc=${CROSS_COMPILE:-arm-linux-gnueabihf-}gcc
-cxx=${CXX:-}
-# pi-286-games deliberately caches the matching C++ cross front end locally;
-# Debian's base cross-GCC package only installs C support.  Do not inherit a
-# host CXX such as g++: it makes configure test the host SDL instead.
-if [ -z "$cxx" ] || ! "$cxx" -dumpmachine 2>/dev/null | grep -qx arm-linux-gnueabihf; then
-  candidate=${CROSS_COMPILE:-arm-linux-gnueabihf-}g++
-  if command -v "$candidate" >/dev/null 2>&1; then cxx=$candidate
-  else cxx=$repo/../pi-286-games/.cache/cross-cxx/usr/bin/arm-linux-gnueabihf-g++-14
-  fi
-fi
+# The cached frontend is deliberately explicit: Debian's base cross package
+# only provides C, while an inherited host CXX makes configure detect host SDL.
+cxx=${CXX:-$repo/../pi-286-games/.cache/cross-cxx/usr/bin/arm-linux-gnueabihf-g++-14}
 flags='-O2 -fomit-frame-pointer -marm -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard'
 runtime="$sysroot/lib/arm-linux-gnueabihf"
 sdl="$sdl_stage/opt/sdl12-fbcon"
