@@ -18,6 +18,7 @@ for tool in "$cc" "$cxx" make file readelf strings dpkg-source; do command -v "$
 "$cc" -dumpmachine | grep -qx arm-linux-gnueabihf || { echo "C compiler is not arm-linux-gnueabihf: $cc" >&2; exit 1; }
 "$cxx" -dumpmachine | grep -qx arm-linux-gnueabihf || { echo "C++ compiler is not arm-linux-gnueabihf: $cxx" >&2; exit 1; }
 [ -f "$runtime/Scrt1.o" ] && [ -f "$runtime/crti.o" ] && [ -f "$runtime/crtn.o" ] || { echo "Pi ARMv6 crt objects missing from $sysroot" >&2; exit 1; }
+[ -f "$sysroot/usr/lib/arm-linux-gnueabihf/libc_nonshared.a" ] && [ -e "$sysroot/lib/ld-linux-armhf.so.3" ] || { echo "Pi libc linker inputs missing from $sysroot; rerun pi-286-games sysroot sync" >&2; exit 1; }
 [ -f "$sdl/lib/libSDL-1.2.so.0.11.5" ] || { echo "Staged Pi SDL fbcon library missing from $sdl" >&2; exit 1; }
 [ -d "$source" ] || "$repo/scripts/fetch-debian-source.sh"
 "$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
@@ -63,7 +64,7 @@ build_one() {
     src/cpu/libcpu.a src/debug/libdebug.a src/dos/libdos.a src/fpu/libfpu.a \
     src/hardware/libhardware.a src/gui/libgui.a src/ints/libints.a src/misc/libmisc.a \
     src/shell/libshell.a src/hardware/mame/libmame.a src/hardware/serialport/libserial.a src/libs/gui_tk/libgui_tk.a \
-    -L"$sdl/lib" -L"$runtime" -Wl,-rpath,'$ORIGIN/../lib' -lSDL -lSDL_net -lasound -lm -ldl -lpthread \
+    -L"$sdl/lib" -L"$runtime" -Wl,-rpath,'$ORIGIN/../lib' -lSDL_sound -lSDL -lSDL_net -lasound -lm -ldl -lpthread \
     "$runtime/libstdc++.so.6" "$runtime/libgcc_s.so.1" "$runtime/libc.so.6" \
     "$gcc_runtime/crtendS.o" "$runtime/crtn.o" -o src/dosbox-armv6
   cp src/dosbox-armv6 "$release/bin/dosbox-$name"
@@ -75,6 +76,8 @@ cp "$sdl/lib/libSDL-1.2.so.0.11.5" "$release/lib/"
 ln -s libSDL-1.2.so.0.11.5 "$release/lib/libSDL-1.2.so.0"
 cp "$runtime/libSDL_net-1.2.so.0.8.0" "$release/lib/"
 ln -s libSDL_net-1.2.so.0.8.0 "$release/lib/libSDL_net-1.2.so.0"
+cp "$runtime/libSDL_sound-1.0.so.1.0.2" "$release/lib/"
+ln -s libSDL_sound-1.0.so.1.0.2 "$release/lib/libSDL_sound-1.0.so.1"
 for f in "$release/bin/dosbox-normal" "$release/bin/dosbox-dynrec"; do
   file "$f" | grep -q 'ARM'
   readelf -A "$f" | grep -Eq 'Tag_CPU_arch: v6|Tag_CPU_arch: v6KZ'
