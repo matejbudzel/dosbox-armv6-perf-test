@@ -29,6 +29,10 @@ irq=7
 dma=1
 hdma=5
 
+[midi]
+mpu401=none
+mididevice=none
+
 [autoexec]
 mount c "@GAMEDIR@"
 c:

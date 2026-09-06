@@ -54,6 +54,8 @@ run_gp() {
   echo "== Grand Prix ${game_seconds}s soak: $name =="
   start=$(date +%s%N)
   SDL_VIDEODRIVER="$video" SDL_AUDIODRIVER="$audio" SDL_FBDEV=/dev/fb0 SDL_FB_BROKEN_MODES=1 \
+    PI286_SDL_PRESENT_STATS="$work/$name.gp.present.tsv" \
+    LD_PRELOAD="$root/lib/libpi286-sdl-present.so${LD_PRELOAD:+:$LD_PRELOAD}" \
     LD_LIBRARY_PATH="$root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
     "$binary" -conf "$config" >"$log" 2>&1 & pid=$!
   sleep 2
@@ -66,7 +68,10 @@ run_gp() {
   kill -KILL "$pid" 2>/dev/null || :; wait "$pid" || :
   end=$(date +%s%N); elapsed=$(( (end-start)/1000000 )); hz=$(getconf CLK_TCK)
   case $ticks in *[!0-9]*|'') cpu_ms=unavailable;; *) cpu_ms=$((ticks*1000/hz));; esac
-  echo "$name: host_elapsed_ms=$elapsed process_cpu_ms=$cpu_ms log=$log"
+  if [ -s "$work/$name.gp.present.tsv" ]; then
+    pacing=$(awk 'NR > 1 { frames += $2; windows++; if ($4 > max_gap) max_gap=$4; drops += $6 } END { if (windows) printf "present_fps=%.1f max_gap_ms=%.1f gaps_over_33ms=%d", frames/windows, max_gap/1000, drops; else print "present_stats=none" }' "$work/$name.gp.present.tsv")
+  else pacing=present_stats=unavailable; fi
+  echo "$name: host_elapsed_ms=$elapsed process_cpu_ms=$cpu_ms $pacing log=$log"
 }
 run_av distro /usr/bin/dosbox "$root/config/av-normal.conf.in"
 run_av custom-normal "$root/bin/dosbox-normal" "$root/config/av-normal.conf.in"

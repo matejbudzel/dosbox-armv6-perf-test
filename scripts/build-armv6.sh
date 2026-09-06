@@ -88,6 +88,13 @@ cp "$runtime/libSDL_net-1.2.so.0.8.0" "$release/lib/"
 ln -s libSDL_net-1.2.so.0.8.0 "$release/lib/libSDL_net-1.2.so.0"
 cp "$runtime/libSDL_sound-1.0.so.1.0.2" "$release/lib/"
 ln -s libSDL_sound-1.0.so.1.0.2 "$release/lib/libSDL_sound-1.0.so.1"
+# This optional interposer measures SDL present cadence without changing the
+# deployed /opt SDL library. It is enabled only by the integration runner.
+"$cc" --sysroot="$sysroot" $flags -fPIC -shared -nostartfiles -nodefaultlibs \
+  -I"$sdl/include/SDL" "$repo/telemetry/sdl-present-trace.c" \
+  "$runtime/libc.so.6" "$runtime/libgcc_s.so.1" -o "$release/lib/libpi286-sdl-present.so"
+file "$release/lib/libpi286-sdl-present.so" | grep -q ARM
+readelf -A "$release/lib/libpi286-sdl-present.so" | grep -Eq 'Tag_CPU_arch: v6|Tag_CPU_arch: v6KZ'
 for f in "$release/bin/dosbox-normal" "$release/bin/dosbox-dynrec"; do
   file "$f" | grep -q 'ARM'
   readelf -A "$f" | grep -Eq 'Tag_CPU_arch: v6|Tag_CPU_arch: v6KZ'
