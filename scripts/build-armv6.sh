@@ -21,10 +21,10 @@ for tool in "$cc" "$cxx" make file readelf strings dpkg-source; do command -v "$
 [ -f "$sysroot/usr/lib/arm-linux-gnueabihf/libc_nonshared.a" ] && [ -e "$sysroot/lib/ld-linux-armhf.so.3" ] || { echo "Pi libc linker inputs missing from $sysroot; rerun pi-286-games sysroot sync" >&2; exit 1; }
 [ -f "$sdl/lib/libSDL-1.2.so.0.11.5" ] || { echo "Staged Pi SDL fbcon library missing from $sdl" >&2; exit 1; }
 [ -d "$source" ] || "$repo/scripts/fetch-debian-source.sh"
-"$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
 if [ "${CLEAN:-0}" = 1 ]; then rm -rf "$work"; fi
 rm -rf "$release/bin" "$release/lib" "$release/config" "$release/guest"
-mkdir -p "$work" "$release/bin" "$release/lib" "$release/config"
+mkdir -p "$work" "$release/bin" "$release/lib" "$release/config" "$release/guest"
+"$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
 build_one() {
   name=$1; dynamic=$2; dir="$work/$name"
   if [ ! -d "$dir" ]; then
@@ -33,7 +33,7 @@ build_one() {
     # autoreconf with the historical automake-1.15 tool.  This must happen
     # only before configure: repeating it makes make re-run configure without
     # the staged SDL_CONFIG environment.
-    find "$dir" \( -name aclocal.m4 -o -name configure -o -name Makefile.in \) -exec touch {} +
+    find "$dir" \( -name aclocal.m4 -o -name configure -o -name Makefile.in -o -name config.h.in \) -exec touch {} +
   fi
   cd "$dir"
   if [ ! -f config.status ]; then
@@ -48,7 +48,16 @@ build_one() {
   fi
   if [ "$name" = dynrec ]; then
     # 0.74-3 has ARMV4LE but configure does not select ARM automatically.
-    sed -i 's/^#define C_TARGETCPU UNKNOWN$/#define C_TARGETCPU ARMV4LE/; s@^/\* #undef C_DYNREC \*/$@#define C_DYNREC 1@' config.h
+    # Patch the template, rather than only config.h: Automake may regenerate
+    # config.h immediately before compilation and otherwise erase the choice.
+    sed -i 's/^#undef C_DYNREC$/#define C_DYNREC 1/' config.h.in
+    # config.status holds configure's selected UNKNOWN target for ARM.  Keep
+    # its generated header definition ARMV4LE and newer than configure, so
+    # make cannot reconfigure and undo it just before compiling the core.
+    sed -i 's/C_TARGETCPU\"]=" UNKNOWN/C_TARGETCPU\"]=" ARMV4LE/' config.status
+    touch config.status
+    rm -f config.h
+    ./config.status config.h
     grep -qx '#define C_TARGETCPU ARMV4LE' config.h
     grep -qx '#define C_DYNREC 1' config.h
   fi
