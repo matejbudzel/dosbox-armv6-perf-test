@@ -50,7 +50,7 @@ build_one() {
   # the ARMv6 crt/runtime copied from the real Pi sysroot, never the toolchain
   # defaults.  Static archives preserve the same link order as src/Makefile.
   gcc_runtime="$sysroot/usr/lib/gcc/arm-linux-gnueabihf/14"
-  "$cxx" -B"$repo/tools" --sysroot="$sysroot" $flags -pie -nostartfiles -nodefaultlibs \
+  "$cxx" -B"$repo/tools" --sysroot="$sysroot" $flags -fno-use-linker-plugin -pie -nostartfiles -nodefaultlibs \
     "$runtime/Scrt1.o" "$runtime/crti.o" "$gcc_runtime/crtbeginS.o" src/dosbox.o \
     src/cpu/libcpu.a src/debug/libdebug.a src/dos/libdos.a src/fpu/libfpu.a \
     src/hardware/libhardware.a src/gui/libgui.a src/ints/libints.a src/misc/libmisc.a \
