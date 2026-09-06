@@ -26,11 +26,15 @@ rm -rf "$release/bin" "$release/lib" "$release/config" "$release/guest"
 mkdir -p "$work" "$release/bin" "$release/lib" "$release/config"
 build_one() {
   name=$1; dynamic=$2; dir="$work/$name"
-  if [ ! -d "$dir" ]; then cp -a "$source" "$dir"; fi
+  if [ ! -d "$dir" ]; then
+    cp -a "$source" "$dir"
+    # Debian's extracted patch timestamps otherwise trigger an unnecessary
+    # autoreconf with the historical automake-1.15 tool.  This must happen
+    # only before configure: repeating it makes make re-run configure without
+    # the staged SDL_CONFIG environment.
+    find "$dir" \( -name aclocal.m4 -o -name configure -o -name Makefile.in \) -exec touch {} +
+  fi
   cd "$dir"
-  # Debian's extracted patch timestamps otherwise trigger an unnecessary
-  # autoreconf with the historical automake-1.15 tool.
-  find . \( -name aclocal.m4 -o -name configure -o -name Makefile.in \) -exec touch {} +
   if [ ! -f config.status ]; then
     # sdl-config's target prefix is /opt/sdl12-fbcon; override it while
     # configure runs on the development host against the staged copy.
