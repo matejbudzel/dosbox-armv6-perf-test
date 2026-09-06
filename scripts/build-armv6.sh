@@ -31,16 +31,16 @@ build_one() {
   # Debian's extracted patch timestamps otherwise trigger an unnecessary
   # autoreconf with the historical automake-1.15 tool.
   find . \( -name aclocal.m4 -o -name configure -o -name Makefile.in \) -exec touch {} +
-  if [ ! -f config.status ]; then CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
-  CFLAGS="--sysroot=$sysroot $flags" CXXFLAGS="--sysroot=$sysroot $flags" \
-  CPPFLAGS="--sysroot=$sysroot -I$sdl/include/SDL" \
-  # The cached g++ frontend was extracted without its optional LTO plugin.
-  # DOSBox is not built with LTO, so suppress its distro default at link time.
-  LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
-  # The staged sdl-config has its target prefix (/opt/sdl12-fbcon) compiled
-  # in. Override it for configure-time host-side header/link checks.
-  SDL_CONFIG="$sdl/bin/sdl-config --prefix=$sdl --exec-prefix=$sdl" \
-  ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}; fi
+  if [ ! -f config.status ]; then
+    # sdl-config's target prefix is /opt/sdl12-fbcon; override it while
+    # configure runs on the development host against the staged copy.
+    CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
+      CFLAGS="--sysroot=$sysroot $flags" CXXFLAGS="--sysroot=$sysroot $flags" \
+      CPPFLAGS="--sysroot=$sysroot -I$sdl/include/SDL -I$sysroot/usr/include/SDL" \
+      LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
+      SDL_CONFIG="$sdl/bin/sdl-config --prefix=$sdl --exec-prefix=$sdl" \
+      ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}
+  fi
   if [ "$name" = dynrec ]; then
     # 0.74-3 has ARMV4LE but configure does not select ARM automatically.
     sed -i 's/^#define C_TARGETCPU UNKNOWN$/#define C_TARGETCPU ARMV4LE/; s@^/\* #undef C_DYNREC \*/$@#define C_DYNREC 1@' config.h
