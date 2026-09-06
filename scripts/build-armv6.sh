@@ -36,7 +36,9 @@ build_one() {
   # The cached g++ frontend was extracted without its optional LTO plugin.
   # DOSBox is not built with LTO, so suppress its distro default at link time.
   LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
-  SDL_CONFIG="$sdl/bin/sdl-config" \
+  # The staged sdl-config has its target prefix (/opt/sdl12-fbcon) compiled
+  # in. Override it for configure-time host-side header/link checks.
+  SDL_CONFIG="$sdl/bin/sdl-config --prefix=$sdl --exec-prefix=$sdl" \
   ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}
   if [ "$name" = dynrec ]; then
     # 0.74-3 has ARMV4LE but configure does not select ARM automatically.
