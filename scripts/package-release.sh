@@ -3,7 +3,8 @@ set -eu
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 release=$repo/release; version=${1:-v0.1.0}; mkdir -p "$release/scripts" "$repo/dist"
 commit=$(git -C "$repo" rev-parse HEAD)
-cp "$repo/scripts/run-on-pi.sh" "$release/scripts/"; chmod +x "$release/scripts/run-on-pi.sh"
+cp "$repo/scripts/run-on-pi.sh" "$repo/scripts/run-integration-on-pi.sh" "$release/scripts/"
+chmod +x "$release/scripts/run-on-pi.sh" "$release/scripts/run-integration-on-pi.sh"
 cat > "$release/BUILD-MANIFEST.txt" <<EOF
 release=$version
 repository_commit=$commit

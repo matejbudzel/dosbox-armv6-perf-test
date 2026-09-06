@@ -25,6 +25,7 @@ if [ "${CLEAN:-0}" = 1 ]; then rm -rf "$work"; fi
 rm -rf "$release/bin" "$release/lib" "$release/config" "$release/guest"
 mkdir -p "$work" "$release/bin" "$release/lib" "$release/config" "$release/guest"
 "$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
+"$repo/benchmark/build-com.sh" "$release/guest/AV-BENCH.COM"
 build_one() {
   name=$1; dynamic=$2; dir="$work/$name"
   if [ ! -d "$dir" ]; then
@@ -92,5 +93,5 @@ for f in "$release/bin/dosbox-normal" "$release/bin/dosbox-dynrec"; do
   readelf -A "$f" | grep -Eq 'Tag_CPU_arch: v6|Tag_CPU_arch: v6KZ'
   readelf -A "$f" | grep -q 'Tag_ABI_VFP_args: VFP registers'
 done
-cp "$repo/configs/cpu-normal.conf.in" "$repo/configs/cpu-dynamic.conf.in" "$release/config/"
+cp "$repo/configs"/*.conf.in "$release/config/"
 printf 'Built ARMv6 hard-float binaries in %s\n' "$release"

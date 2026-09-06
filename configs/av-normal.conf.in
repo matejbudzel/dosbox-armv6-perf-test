@@ -1,0 +1,31 @@
+[sdl]
+fullscreen=true
+fulldouble=false
+output=surface
+
+[dosbox]
+machine=svga_s3
+memsize=16
+
+[cpu]
+core=normal
+cputype=386
+cycles=max
+
+[mixer]
+nosound=false
+rate=22050
+blocksize=512
+prebuffer=20
+
+[speaker]
+pcspeaker=true
+pcrate=22050
+tandy=off
+disney=false
+
+[autoexec]
+mount c "@GUESTDIR@"
+c:
+AV-BENCH.COM > RESULT.TXT
+exit
