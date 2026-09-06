@@ -21,16 +21,17 @@ for tool in "$cc" "$cxx" make file readelf strings dpkg-source; do command -v "$
 [ -f "$sdl/lib/libSDL-1.2.so.0.11.5" ] || { echo "Staged Pi SDL fbcon library missing from $sdl" >&2; exit 1; }
 [ -d "$source" ] || "$repo/scripts/fetch-debian-source.sh"
 "$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
-rm -rf "$work" "$release/bin" "$release/lib" "$release/config"
+if [ "${CLEAN:-0}" = 1 ]; then rm -rf "$work"; fi
+rm -rf "$release/bin" "$release/lib" "$release/config"
 mkdir -p "$work" "$release/bin" "$release/lib" "$release/config"
 build_one() {
   name=$1; dynamic=$2; dir="$work/$name"
-  cp -a "$source" "$dir"
+  if [ ! -d "$dir" ]; then cp -a "$source" "$dir"; fi
   cd "$dir"
   # Debian's extracted patch timestamps otherwise trigger an unnecessary
   # autoreconf with the historical automake-1.15 tool.
   find . \( -name aclocal.m4 -o -name configure -o -name Makefile.in \) -exec touch {} +
-  CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
+  if [ ! -f config.status ]; then CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
   CFLAGS="--sysroot=$sysroot $flags" CXXFLAGS="--sysroot=$sysroot $flags" \
   CPPFLAGS="--sysroot=$sysroot -I$sdl/include/SDL" \
   # The cached g++ frontend was extracted without its optional LTO plugin.
@@ -39,7 +40,7 @@ build_one() {
   # The staged sdl-config has its target prefix (/opt/sdl12-fbcon) compiled
   # in. Override it for configure-time host-side header/link checks.
   SDL_CONFIG="$sdl/bin/sdl-config --prefix=$sdl --exec-prefix=$sdl" \
-  ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}
+  ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}; fi
   if [ "$name" = dynrec ]; then
     # 0.74-3 has ARMV4LE but configure does not select ARM automatically.
     sed -i 's/^#define C_TARGETCPU UNKNOWN$/#define C_TARGETCPU ARMV4LE/; s@^/\* #undef C_DYNREC \*/$@#define C_DYNREC 1@' config.h
@@ -48,7 +49,7 @@ build_one() {
   fi
   # Make's final executable link uses CXX directly and can discard configure's
   # LDFLAGS; inject the no-LTO-plugin option at that exact invocation.
-  make CXX="$cxx -B$repo/tools --sysroot=$sysroot -fno-use-linker-plugin" -j"${JOBS:-$(getconf _NPROCESSORS_ONLN)}"
+  make -k CXX="$cxx -B$repo/tools --sysroot=$sysroot -fno-use-linker-plugin $flags" -j"${JOBS:-$(getconf _NPROCESSORS_ONLN)}" || :
   # Debian cross GCC's crt objects are ARMv7. Relink every DOSBox object with
   # the ARMv6 crt/runtime copied from the real Pi sysroot, never the toolchain
   # defaults.  Static archives preserve the same link order as src/Makefile.
