@@ -22,7 +22,7 @@ for tool in "$cc" "$cxx" make file readelf strings dpkg-source; do command -v "$
 [ -d "$source" ] || "$repo/scripts/fetch-debian-source.sh"
 "$repo/benchmark/build-com.sh" "$release/guest/CPUBENCH.COM"
 if [ "${CLEAN:-0}" = 1 ]; then rm -rf "$work"; fi
-rm -rf "$release/bin" "$release/lib" "$release/config"
+rm -rf "$release/bin" "$release/lib" "$release/config" "$release/guest"
 mkdir -p "$work" "$release/bin" "$release/lib" "$release/config"
 build_one() {
   name=$1; dynamic=$2; dir="$work/$name"
