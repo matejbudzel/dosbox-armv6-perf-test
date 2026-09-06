@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
-release=v0.1.0
+release=v0.1.1
 base=https://github.com/matejbudzel/dosbox-armv6-perf-test/releases/download/$release
 work=${DOSBOX_ARMV6_PERF_WORKDIR:-/tmp/dosbox-armv6-perf-test}
-archive=dosbox-armv6-perf-test-v0.1.0.tar.gz
+archive=dosbox-armv6-perf-test-v0.1.1.tar.gz
 mkdir -p "$work"; cd "$work"
 curl -fL -o SHA256SUMS "$base/SHA256SUMS"
 curl -fL -o "$archive" "$base/$archive"
