@@ -46,7 +46,9 @@ build_one() {
     grep -qx '#define C_TARGETCPU ARMV4LE' config.h
     grep -qx '#define C_DYNREC 1' config.h
   fi
-  make -j"${JOBS:-$(getconf _NPROCESSORS_ONLN)}"
+  # Make's final executable link uses CXX directly and can discard configure's
+  # LDFLAGS; inject the no-LTO-plugin option at that exact invocation.
+  make CXX="$cxx -B$repo/tools --sysroot=$sysroot -fno-use-linker-plugin" -j"${JOBS:-$(getconf _NPROCESSORS_ONLN)}"
   # Debian cross GCC's crt objects are ARMv7. Relink every DOSBox object with
   # the ARMv6 crt/runtime copied from the real Pi sysroot, never the toolchain
   # defaults.  Static archives preserve the same link order as src/Makefile.
