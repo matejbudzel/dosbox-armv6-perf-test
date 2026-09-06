@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+release=v0.1.0
+base=https://github.com/matejbudzel/dosbox-armv6-perf-test/releases/download/$release
+work=${DOSBOX_ARMV6_PERF_WORKDIR:-/tmp/dosbox-armv6-perf-test}
+archive=dosbox-armv6-perf-test-v0.1.0.tar.gz
+mkdir -p "$work"; cd "$work"
+curl -fL -o SHA256SUMS "$base/SHA256SUMS"
+curl -fL -o "$archive" "$base/$archive"
+grep "  $archive$" SHA256SUMS | sha256sum -c -
+rm -rf payload; mkdir payload; tar -xzf "$archive" -C payload
+exec sh payload/scripts/run-on-pi.sh "$@"

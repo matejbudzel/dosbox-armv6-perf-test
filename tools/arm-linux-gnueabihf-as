@@ -1,0 +1,10 @@
+#!/bin/sh
+# GCC 14's cached C++ cross driver spells the ARMv6+VFP architecture as
+# armv6zk+fp; the installed GNU as accepts the equivalent armv6zk spelling.
+set -eu
+args=
+for arg in "$@"; do
+    case $arg in -march=armv6zk+fp) arg=-march=armv6zk ;; esac
+    args="$args $(printf '%s' "$arg" | sed "s/'/'\\\\''/g")"
+done
+eval "exec /usr/bin/arm-linux-gnueabihf-as $args"
