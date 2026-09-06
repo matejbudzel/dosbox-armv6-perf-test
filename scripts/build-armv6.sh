@@ -37,7 +37,7 @@ build_one() {
     CC="$cc --sysroot=$sysroot" CXX="$cxx -B$repo/tools --sysroot=$sysroot" \
       CFLAGS="--sysroot=$sysroot $flags" CXXFLAGS="--sysroot=$sysroot $flags" \
       CPPFLAGS="--sysroot=$sysroot -I$sdl/include/SDL -I$sysroot/usr/include/SDL" \
-      LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -Wl,-rpath,\$ORIGIN/../lib" \
+      LDFLAGS="--sysroot=$sysroot $flags -fno-use-linker-plugin -L$sdl/lib -L$runtime -Wl,-rpath,\$ORIGIN/../lib" \
       SDL_CONFIG="$sdl/bin/sdl-config --prefix=$sdl --exec-prefix=$sdl" \
       ./configure --build="$(gcc -dumpmachine)" --host=arm-linux-gnueabihf --disable-sdltest --disable-alsatest --disable-opengl --disable-debug ${dynamic}
   fi
@@ -59,7 +59,7 @@ build_one() {
     src/cpu/libcpu.a src/debug/libdebug.a src/dos/libdos.a src/fpu/libfpu.a \
     src/hardware/libhardware.a src/gui/libgui.a src/ints/libints.a src/misc/libmisc.a \
     src/shell/libshell.a src/hardware/mame/libmame.a src/hardware/serialport/libserial.a src/libs/gui_tk/libgui_tk.a \
-    -L"$sdl/lib" -Wl,-rpath,'$ORIGIN/../lib' -lSDL -lasound -lm -ldl -lpthread \
+    -L"$sdl/lib" -L"$runtime" -Wl,-rpath,'$ORIGIN/../lib' -lSDL -lSDL_net -lasound -lm -ldl -lpthread \
     "$runtime/libstdc++.so.6" "$runtime/libgcc_s.so.1" "$runtime/libc.so.6" \
     "$gcc_runtime/crtendS.o" "$runtime/crtn.o" -o src/dosbox-armv6
   cp src/dosbox-armv6 "$release/bin/dosbox-$name"
@@ -69,6 +69,8 @@ build_one normal '--disable-dynamic-core'
 build_one dynrec ''
 cp "$sdl/lib/libSDL-1.2.so.0.11.5" "$release/lib/"
 ln -s libSDL-1.2.so.0.11.5 "$release/lib/libSDL-1.2.so.0"
+cp "$runtime/libSDL_net-1.2.so.0.8.0" "$release/lib/"
+ln -s libSDL_net-1.2.so.0.8.0 "$release/lib/libSDL_net-1.2.so.0"
 for f in "$release/bin/dosbox-normal" "$release/bin/dosbox-dynrec"; do
   file "$f" | grep -q 'ARM'
   readelf -A "$f" | grep -Eq 'Tag_CPU_arch: v6|Tag_CPU_arch: v6KZ'
